@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolePosition - F1 League Management Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF1801;
+            --primary-dark: #CC1200;
+            --primary-light: #FF4444;
+            --dark-bg: #0a0e27;
+            --darker-bg: #050810;
+            --card-bg: rgba(255, 24, 1, 0.05);
+            --card-border: rgba(255, 24, 1, 0.15);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 24, 1, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 24, 1, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: backgroundShift 8s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            50% {
+                transform: translate(20px, -20px);
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 24, 1, 0.4), 0 0 40px rgba(255, 24, 1, 0.2);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(255, 24, 1, 0.8), 0 0 60px rgba(255, 24, 1, 0.4);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 24, 1, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(255, 24, 1, 0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1.2rem 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 24, 1, 0.2);
+            animation: slideInDown 0.6s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        nav .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: #ccc;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+            position: relative;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(255, 24, 1, 0.15) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hero .container {
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease-out, glow 3s ease-in-out infinite;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            color: #999;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+            font-weight: 300;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .cta-button {
+            padding: 1.2rem 2.8rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 24, 1, 0.3);
+        }
+
+        .cta-button.primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s;
+        }
+
+        .cta-button.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 24, 1, 0.4);
+        }
+
+        .cta-button.primary:hover::before {
+            left: 100%;
+        }
+
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .cta-button.secondary:hover {
+            background: rgba(255, 24, 1, 0.1);
+            border-color: var(--primary-light);
+            transform: translateY(-3px);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #777;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 2.5rem;
+            border-radius: 15px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+        .feature-card:nth-child(4) { animation-delay: 0.4s; }
+        .feature-card:nth-child(5) { animation-delay: 0.5s; }
+        .feature-card:nth-child(6) { animation-delay: 0.6s; }
+        .feature-card:nth-child(7) { animation-delay: 0.7s; }
+        .feature-card:nth-child(8) { animation-delay: 0.8s; }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 24, 1, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255, 24, 1, 0.5);
+            background: rgba(255, 24, 1, 0.08);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(255, 24, 1, 0.15);
+        }
+
+        .feature-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover h3 {
+            transform: translateY(-5px);
+        }
+
+        .feature-card p {
+            color: #aaa;
+            line-height: 1.8;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, rgba(255, 24, 1, 0.1) 0%, rgba(255, 24, 1, 0.05) 100%);
+            border: 1px solid rgba(255, 24, 1, 0.2);
+            padding: 4rem 0;
+            margin: 4rem 0;
+            border-radius: 15px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat {
+            padding: 2rem;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        .stat-label {
+            color: #999;
+            margin-top: 0.8rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 6rem 0;
+        }
+
+        .faq-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .faq-item:nth-child(1) { animation-delay: 0.1s; }
+        .faq-item:nth-child(2) { animation-delay: 0.2s; }
+        .faq-item:nth-child(3) { animation-delay: 0.3s; }
+        .faq-item:nth-child(4) { animation-delay: 0.4s; }
+        .faq-item:nth-child(5) { animation-delay: 0.5s; }
+        .faq-item:nth-child(6) { animation-delay: 0.6s; }
+        .faq-item:nth-child(7) { animation-delay: 0.7s; }
+        .faq-item:nth-child(8) { animation-delay: 0.8s; }
+
+        .faq-item:hover {
+            border-color: rgba(255, 24, 1, 0.5);
+            background: rgba(255, 24, 1, 0.08);
+            transform: translateX(10px);
+        }
+
+        .faq-item h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .faq-item h4::after {
+            content: '+';
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active h4::after {
+            transform: rotate(45deg);
+        }
+
+        .faq-item p {
+            color: #aaa;
+            display: none;
+            animation: fadeInUp 0.3s ease-out;
+            margin-top: 1rem;
+            line-height: 1.8;
+        }
+
+        .faq-item.active p {
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(5, 8, 16, 0.8);
+            border-top: 1px solid rgba(255, 24, 1, 0.2);
+            padding: 3rem 0;
+            margin-top: 6rem;
+            text-align: center;
+        }
+
+        footer p {
+            color: #888;
+            margin: 0.5rem 0;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+            margin: 0 1rem;
+        }
+
+        footer a:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, rgba(255, 24, 1, 0.1) 0%, rgba(255, 24, 1, 0.05) 100%);
+            border: 1px solid rgba(255, 24, 1, 0.2);
+            border-radius: 15px;
+            margin-top: 4rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            color: #999;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">🏁 PolePosition</div>
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="https://discord.gg/YOUR_SUPPORT_SERVER">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>🏎️ PolePosition</h1>
+            <p>Automate Your F1 League Season - From Setup to Standings</p>
+            <div class="hero-buttons">
+                <a href="https://discord.com/oauth2/authorize?client_id=1486113351489814640&permissions=268435456&scope=bot%20applications.commands" class="cta-button primary">Add to Discord</a>
+                <a href="https://discord.gg/YOUR_SUPPORT_SERVER" class="cta-button secondary">Support Server</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Powerful Features</h2>
+            <p class="section-subtitle">Everything you need to manage a professional F1 league</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>⚙️ Automated Setup</h3>
+                    <p>Complete season setup in minutes. Choose circuits, configure roles, and you're ready to race.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 Live Standings</h3>
+                    <p>Real-time driver and constructor championship standings. Automatically updated after each race.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🏁 Race Management</h3>
+                    <p>Enter race results, manage attendance, and track driver positions throughout the season.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚖️ Steward System</h3>
+                    <p>Assign time and point penalties. Standings auto-update to reflect all regulatory actions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎫 Incident Reports</h3>
+                    <p>Drivers can report incidents with evidence. Stewards review and resolve with full documentation.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📅 Season Calendar</h3>
+                    <p>View full race calendar with circuits, dates, and attendance status for each round.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>👥 Team Management</h3>
+                    <p>Assign drivers to teams. Support for primary drivers and reserves throughout the season.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📋 Attendance Sheets</h3>
+                    <p>Interactive buttons for drivers to confirm attending, tentative, or reserve status.</p>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="stats">
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Servers Supported</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">FREE</div>
+                        <div class="stat-label">Forever</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">2026</div>
+                        <div class="stat-label">F1 Ruleset</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">Everything you need to know about PolePosition</p>
+            
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>How do I set up a season?</h4>
+                <p>Use the <code>/create-season</code> command to start the setup walkthrough. You'll select the number of rounds, choose circuits for each race, and configure your manager and steward roles. The entire process takes about 5 minutes.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>What are Manager and Steward roles?</h4>
+                <p><strong>Managers</strong> can enter race results, manage teams, and post attendance sheets. <strong>Stewards</strong> can assign penalties and resolve incident reports. Both roles must be configured for full functionality.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>How do penalties work?</h4>
+                <p>Stewards use the <code>/assign-penalty</code> command to assign time or point penalties to drivers. When penalties are applied, driver and constructor standings automatically recalculate based on the new lap times or point deductions.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>Can drivers report incidents?</h4>
+                <p>Yes! Drivers use <code>/report-incident</code> to submit incident reports with context and evidence links. Stewards can view all reports, resolve them with penalties, or close them without action.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>What points system is used?</h4>
+                <p>The bot uses the 2026 F1 points system: 1st=25pts, 2nd=18, 3rd=15, 4th=12, 5th=10, 6th=8, 7th=6, 8th=4, 9th=2, 10th=1.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>Is my data safe?</h4>
+                <p>All season data is stored in your own database. The bot never shares your league information. You have complete control over all data and can delete seasons anytime.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>Can I use this for multiple seasons?</h4>
+                <p>Absolutely! Create a new season whenever you want. Each season is completely independent with its own data and standings.</p>
+            </div>
+
+            <div class="faq-item" onclick="this.classList.toggle('active')">
+                <h4>What permissions does the bot need?</h4>
+                <p>The bot needs basic permissions to read/send messages and create channels. Only guild administrators can run setup commands.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Automate Your F1 League?</h2>
+            <p>Get started in minutes. No setup fees. No limits.</p>
+            <a href="https://discord.com/oauth2/authorize?client_id=1486113351489814640&permissions=268435456&scope=bot%20applications.commands" class="cta-button primary">Add PolePosition to Your Server</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>
+                <a href="#">Privacy Policy</a> • 
+                <a href="#">Terms of Service</a> • 
+                <a href="https://discord.gg/YOUR_SUPPORT_SERVER">Support Server</a>
+            </p>
+            <p>© 2026 PolePosition | F1 League Management Bot | Not affiliated with FIA or Formula 1</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                if (this.getAttribute('href') !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+
+        // Parallax effect on scroll
+        window.addEventListener('scroll', () => {
+            const hero = document.querySelector('.hero');
+            if (hero) {
+                hero.style.transform = `translateY(${window.scrollY * 0.5}px)`;
+            }
+        });
+    </script>
+</body>
+</html>
